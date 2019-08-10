@@ -106,3 +106,64 @@
          :moeda "¥"))
 
 (map transacao-em-yuan transacoes)
+
+(def cotacoes 
+  {:yuan {:cotacao 2.15 :simbolo "¥"}})
+
+;; Isso
+(defn transacao-em-yuan [transacao]
+  (assoc transacao :valor (* (:cotacao (:yuan cotacoes))
+                             (:valor transacao))
+         :moeda (:simbolo (:yuan cotacoes))))
+;; É o mesmo que isso:
+(defn transacao-em-yuan [transacao]
+  (assoc transacao :valor (* (get-in cotacoes [:yuan :cotacao])
+                             (:valor transacao))
+         :moeda (get-in cotacoes [:yuan :simbolo])))
+;; Que é o mesmo que isso:
+(defn transacao-em-yuan [transacao]
+  (let [yuan (:yuan cotacoes)]
+    (assoc transacao :valor (* (:cotacao yuan) (:valor transacao))
+                               :moeda (:simbolo yuan))))
+
+
+(transacao-em-yuan (first transacoes))
+
+(data-valor (first transacoes))
+
+(data-valor (transacao-em-yuan (first transacoes)))
+
+(class 3.1)
+;; java.lang.Double
+(* 3.1 3.1)
+;; 9.610000000000001
+(class 3.1M)
+;; java.math.BigDecimal
+(* 3.1M 3.1)
+;; 9.610000000000001
+(* 3.1M 3.1M)
+;; 9.61M
+(class (* 3.1M 3.1M))
+;; java.math.BigDecimal
+
+;; Esse "M" na frente dos números transforma eles em BigDecimal 
+
+(def cotacoes 
+  {:yuan {:cotacao 2.15M :simbolo "¥"}})
+
+(def transacoes
+  [{:valor 33.0M :tipo "despesa" :comentario "Almoço" 
+    :moeda "R$" :data "19/11/2016"}
+   {:valor 2700.0M :tipo "receita" :comentario "Bico" 
+    :moeda "R$" :data "01/12/2016"}
+   {:valor 29.0M :tipo "despesa" :comentario "Livro de Clojure" 
+    :moeda "R$" :data "03/12/2016"}])
+
+;; Isso
+(defn texto-resumo-em-yuan [transacao]
+  (data-valor (transacao-em-yuan transacao)))
+;; É o mesmo que isso:
+(defn texto-resumo-em-yuan [transacao]
+  (-> (transacao-em-yuan transacao)
+      (data-valor)))
+(map texto-resumo-em-yuan transacoes)
