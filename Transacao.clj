@@ -166,4 +166,103 @@
 (defn texto-resumo-em-yuan [transacao]
   (-> (transacao-em-yuan transacao)
       (data-valor)))
+;; Que é o mesmo quee isso:
+(def texto-resumo-em-yuan (comp data-valor transacao-em-yuan))
+
 (map texto-resumo-em-yuan transacoes)
+
+;; Isso
+(defn transacao-em-yuan [transacao]
+  (let [yuan (:yuan cotacoes)]
+    (assoc transacao :valor (* (:cotacao yuan) (:valor transacao))
+           :moeda (:simbolo yuan))))
+;; É o mesmo que isso:
+(defn transacao-em-yuan [transacao]
+  (let [{yuan :yuan} cotacoes]
+    (assoc transacao :valor (* (:cotacao yuan) (:valor transacao))
+           :moeda (:simbolo yuan))))
+;; Que é o mesmo que isso:
+(defn transacao-em-yuan [transacao]
+  (let [{{cotacao :cotacao simbolo :simbolo} :yuan} cotacoes]
+    (assoc transacao :valor (* cotacao (:valor transacao))
+           :moeda simbolo)))
+(map transacao-em-yuan transacoes)
+
+(def cotacoes
+  {:yuan {:cotacao 2.15M :simbolo "¥"}
+  :euro {:cotacao 0.28M :simbolo "€"}})
+
+(defn transacao-em-outra-moeda [moeda transacao]
+  (let [{{cotacao :cotacao simbolo :simbolo} moeda} cotacoes]
+    (assoc transacao :valor (* cotacao (:valor transacao))
+           :moeda simbolo)))
+
+(defn transacao-em-outra-moeda [moeda transacao]
+  (let [{{cotacao :cotacao simbolo :simbolo} moeda} cotacoes]
+    (assoc transacao :valor (* cotacao (:valor transacao))
+           :moeda simbolo)))
+
+(transacao-em-outra-moeda :euro (last transacoes))
+
+;;E é uma aplicação parcial porque declaramos parte dos argumentos, não todos. A outra parte do argumento virá em algum outro momento, quando a função for, de fato, aplicada
+(def transacao-em-yuan (partial transacao-em-outra-moeda :yuan))
+
+(def transacao-em-euro (partial transacao-em-outra-moeda :euro))
+
+(transacao-em-euro (first transacoes))
+
+(transacao-em-yuan (first transacoes))
+
+(map transacao-em-yuan transacoes)
+
+(clojure.string/join ", " (map transacao-em-yuan transacoes))
+
+(def junta-tudo (partial clojure.string/join ", "))
+
+(junta-tudo (map transacao-em-yuan transacoes))
+
+(def de-para [{:de "a" :para "4"}
+              :de "e" :para "3"
+              :de "i" :para "1"
+              :de "o" :para "0"])
+
+(defn escrita-hacker [texto dicionario]
+  (if (empty? dicionario)
+    texto
+    (let [conversao (first dicionario)]
+      (escrita-hacker (clojure.string/replace texto
+                                              (:de conversao)
+                                              (:para conversao))
+                      (rest dicionario)))))
+
+
+(escrita-hacker "alameda" de-para)
+
+
+(defn transacao-em-outra-moeda [cotacoes moeda transacao]
+  (let [{{cotacao :cotacao simbolo :simbolo} moeda} cotacoes]
+    (assoc transacao :valor (* cotacao (:valor transacao))
+           :moeda simbolo)))
+
+(transacao-em-outra-moeda cotacoes :euro (last transacoes))
+
+(defn transacao-convertida [cotacoes moeda transacao]
+  (let [{{cotacao :cotacao simbolo :simbolo} moeda} cotacoes] 
+    (assoc transacao :valor (* cotacao (:valor transacao))
+           :moeda simbolo)))
+
+(def transacao-em-outra-moeda 
+  (partial transacao-convertida cotacoes))
+
+(transacao-em-outra-moeda :euro (last transacoes))
+
+
+(defn transacao-em-outra-moeda 
+  ([cotacoes moeda transacao]
+   (let [{{cotacao :cotacao simbolo :simbolo} moeda} cotacoes]
+     (assoc transacao :valor (* cotacao (:valor transacao))
+            :moeda simbolo)))
+  ([moeda transacao]
+   (transacao-em-outra-moeda cotacoes moeda transacao)))
+
+(transacao-em-outra-moeda :euro (last transacoes))
