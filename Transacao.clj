@@ -266,3 +266,44 @@
    (transacao-em-outra-moeda cotacoes moeda transacao)))
 
 (transacao-em-outra-moeda :euro (last transacoes))
+
+(def membros-fundadores 
+  (list "Argentina" "Brasil" "Paraguai" "Uruguai"))
+
+(def membros-plenos 
+  (cons "Venezuela" membros-fundadores))
+
+;; rest pega uma lista e retorna ela sem o primeiro elemento
+(rest membros-plenos)
+
+;; identical? é uma função que compara 2 elementos para
+;; saber se são os mesmos objetos
+(identical? (rest membros-plenos)
+            membros-fundadores)
+
+
+(def transacoes 
+  [{:valor 33M :tipo "despesa" :comentario "Almoço"
+    :moeda "R$" :data "19/11/2016"}
+   {:valor 2700M :tipo "receita" :comentario "Bico"
+    :moeda "R$" :data "01/12/2016"}
+   {:valor 29M :tipo "despesa" :comentario "Livro de Clojure"
+    :moeda "R$" :data "03/12/2016"}])
+
+(def transacoes (cons {:valor 45M :tipo "despesa"
+                       :comentario "Jogo no Steam" :moeda "R$"
+                       :data "26/12/2016"}
+                      transacoes))
+
+(def registros (atom ()))
+
+(swap! registros conj {:valor 29M :tipo "despesa"
+                      :comentario "Livro de clojure" :moeda "R$"
+                      :data "03/12/2016"})
+
+(conj {:valor 29M :tipo "despesa" :comentario "Livro de Clorure"
+       :moeda "R$" :data "03/12/2016"})
+
+(swap! registros conj
+       {:valor 2700M :tipo "receita" :comentario "Bico"
+        :moeda "R$" :data "01/12/2016"})
