@@ -448,3 +448,148 @@ transacoes
 
 ;;Tem como usar reduce
 (reduce calcular 0 transacoes)
+
+
+
+(defn teste-da-preguica []
+  (prn "Não deveria aparecer nada aqui")
+  "nada")
+
+;; recebe dois argumentos
+;; mas não faz nada com eles
+;; retornando uma string
+(defn um-oi [a b]
+  "oi")
+
+(um-oi (teste-da-preguica) (teste-da-preguica))
+
+
+(def transacoes
+  [{:valor 33.0 :tipo "despesa" :comentario "Almoço"
+    :moeda "R$" :data "19/11/2016"}
+   {:valor 2700.0 :tipo "receita" :comentario "Bico"
+    :moeda "R$" :data "01/12/2016"}
+   {:valor 29.0 :tipo "despesa" :comentario "Livro de Clojure"
+    :moeda "R$" :data "03/12/2016"}
+   {:valor 45M :tipo "despesa" :comentario "Jogo no Steam"
+    :moeda "R$" :data "26/12/2016"}])
+;; uma função que nos diz se uma transação é uma despesa
+(defn despesa? [transacao]
+  (= (:tipo transacao) "despesa"))
+;; vamos pegar uma sequência que só tenha despesas
+(filter despesa? transacoes)
+
+
+(def despesas (filter despesa? transacoes))
+despesas
+
+(def transacao-aleatoria {:valor 9.0})
+
+(valor-sinalizado transacao-aleatoria)
+
+(def valores (map valor-sinalizado transacoes))
+valores
+
+;; rand-nth retorna um valor aleatório dentro de uma coleção
+(rand-nth ["despesa" "receita"])
+
+;; rand-int retorna um número inteiro aleatório entre 0 e
+;; o argumento, sem incluir o argumento nas possibilidades
+;; daí multiplicamos por 0.01M para ter um número real com
+;; duas casas decimais
+(* (rand-int 100001) 0.01M)
+
+(defn transacao-aleatoria []
+  {:valor (* (rand-int 100001) 0.01M)
+   :tipo (rand-nth ["despesa" "receita"])})
+(transacao-aleatoria)
+
+;; repeatedly produz uma sequência preguiçosa, cujos elementos são
+;; chamadas à função que lhe é passada como argumento
+(repeatedly 3 transacao-aleatoria)
+;; ... uma lista com 3 transações aleatórias
+(class (repeatedly 3 transacao-aleatoria))
+;; quando não dizemos quantos elementos queremos, repeatedly cria
+;; uma sequência infinita
+(def transacoes-aleatorias (repeatedly transacao-aleatoria))
+
+
+(take 1 transacoes-aleatorias)
+
+(take 2 transacoes-aleatorias)
+
+(take 5 transacoes-aleatorias)
+
+(= (take 5 transacoes-aleatorias) (take 5 transacoes-aleatorias))
+
+(cons (transacao-aleatoria) transacoes)
+
+(defn aleatorias
+  ([quantidade]
+   (aleatorias quantidade 1 (list (transacao-aleatoria))))
+  ([quantidade quantas-ja-foram transacoes]
+   (if (< quantas-ja-foram quantidade)
+     (aleatorias quantidade (inc quantas-ja-foram)
+                 (cons (transacao-aleatoria) transacoes))
+     transacoes)))
+
+(aleatorias 4)
+
+;;erro
+(aleatorias 900000)
+
+(defn aleatorias
+  ([quantidade]
+   (aleatorias quantidade 1 (list (transacao-aleatoria))))
+  ([quantidade quantas-ja-foram transacoes]
+   (if (= quantas-ja-foram quantidade)
+     transacoes
+     (recur quantidade (inc quantas-ja-foram)
+                 (cons (transacao-aleatoria) transacoes)))))
+;; Agora vai! (mas demora)
+;; (aleatorias 900000)
+
+(class (aleatorias 4))
+;; clojure.lang.Cons
+(class (aleatorias 900000))
+;; clojure.lang.Cons
+
+(time (class (aleatorias 4)))
+;; "Elapsed time: 0.054824 msecs"
+;; clojure.lang.Cons
+(time (class (aleatorias 900000)))
+;; "Elapsed time: 917.45872 msecs"
+;; clojure.lang.Cons
+
+(defn aleatorias
+  ([quantidade]
+   (aleatorias quantidade 1 (list (transacao-aleatoria))))
+  ([quantidade quantas-ja-foram transacoes]
+   (lazy-seq
+    (if (= quantas-ja-foram quantidade)
+      transacoes
+      (aleatorias quantidade (inc quantas-ja-foram)
+             (cons (transacao-aleatoria) transacoes))))))
+
+(time (class (aleatorias 4)))
+;; "Elapsed time: 0.03271 msecs"
+;; clojure.lang.LazySeq
+(time (class (aleatorias 900000)))
+;; "Elapsed time: 0.029649 msecs"
+;; clojure.lang.LazySeq
+
+(defn aleatorias []
+  (lazy-seq
+   (cons (transacao-aleatoria) (aleatorias))))
+
+(time (class (take 4 (aleatorias))))
+;; "Elapsed time: 0.170615 msecs"
+;; clojure.lang.LazySeq
+(time (class (take 900000 (aleatorias))))
+;; "Elapsed time: 0.046173 msecs"
+;; clojure.lang.LazySeq
+
+(take 4 (aleatorias))
+
+;;Funciona sem estourar a pilha (mas demora) graças a lazy-seq
+;;(take 900000 (aleatorias))
