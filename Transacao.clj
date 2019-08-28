@@ -593,3 +593,34 @@ valores
 
 ;;Funciona sem estourar a pilha (mas demora) graças a lazy-seq
 ;;(take 900000 (aleatorias))
+
+(require '[clj-http.client :as http-client])
+
+(http-client/get "https://pokeapi.co/api/v2/pokemon/pikachu/")
+
+(def chave (System/getenv "CHAVE_API"))
+
+(def api-url 
+  "https://free.currencyconverterapi.com/api/v6/convert")
+
+(http-client/get api-url 
+  {:query-params {"q" "USD_BRL"
+                  "apiKey" chave}})
+
+(http-client/get api-url
+  {:query-params {"q" "EUR_BRL"
+                  "apiKey" chave}})
+
+
+(require '[cheshire.core :refer :all])
+(require '[clj-http.client :as http-client])
+
+(def usd-brl
+  (:body (http-client/get api-url
+  {:query-params {"q" "USD_BRL"
+  "apiKey" chave}})))
+
+(parse-string usd-brl)
+
+(-> (parse-string usd-brl)
+    (get-in ["results" "USD_BRL" "val"]))
