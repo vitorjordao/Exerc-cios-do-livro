@@ -3,15 +3,27 @@
             [compojure.route :as route]
             [cheshire.core :as json]
             [ring.middleware.defaults :refer [wrap-defaults 
-                                              site-defaults]]))
-(defn saldo-como-json []
-  {:headers {"Content-Type" "application/json; charset=utf-8"}
-   :body (json/generate-string {:saldo 0})})
+                                              api-defaults]]
+            [ring.middleware.json :refer [wrap-json-body]]
+            [financeiro.db :as db]
+            [financeiro.transacoes :as transacoes]))
+
+(defn como-json [conteudo & [status]]
+  {:status (or status 200)
+   :headers {"Content-Type" "application/json; charset=utf-8"}
+   :body (json/generate-string conteudo)})
 
 (defroutes app-routes
   (GET "/" [] "Olá, mundo!")
-  (GET "/saldo" [] (saldo-como-json))
+  (GET "/saldo" [] (como-json {:saldo (db/saldo)}))
+  (POST "/transacoes" requisicao
+    (if (transacoes/valida? (:body requisicao))
+      (-> (db/registrar (:body requisicao))
+          (como-json 201))
+      (como-json {:mensagem "Requisição inválida"} 422)))
   (route/not-found "Recurso não encontrado"))
 
 (def app
-  (wrap-defaults app-routes site-defaults))
+  ;; para trabalhar com páginas web: site-defaults
+  (-> (wrap-defaults app-routes api-defaults)
+      (wrap-json-body {:keywords? true :bigdecimals? true})))
